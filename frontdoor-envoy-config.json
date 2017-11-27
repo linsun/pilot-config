@@ -1,0 +1,119 @@
+{
+  "listeners": [
+  {
+    "address": "tcp://0.0.0.0:15001",
+    "name": "http_0.0.0.0_15001",
+    "filters": [
+     {
+      "type": "read",
+      "name": "http_connection_manager",
+      "config": {
+       "codec_type": "auto",
+       "stat_prefix": "http",
+       "generate_request_id": true,
+       "use_remote_address": true,
+       "tracing": {
+        "operation_name": "egress"
+       },
+       "rds": {
+        "cluster": "rds",
+        "route_config_name": "80",
+        "refresh_delay_ms": 10
+       },
+       "filters": [
+        {
+          "type": "decoder",
+          "name": "mixer",
+          "config": {
+           "mixer_attributes": {
+            "destination.ip": "",
+            "destination.uid": "kubernetes://frontdoorpodname.kube-system"
+           },
+           "forward_attributes": {
+            "source.ip": "",
+            "source.uid": "kubernetes://frontdoorpodname.kube-system"
+           },
+           "quota_name": "RequestCount"
+          }
+         },
+        {
+         "type": "",
+         "name": "cors",
+         "config": {}
+        },
+        {
+         "type": "decoder",
+         "name": "router",
+         "config": {}
+        }
+       ],
+       "access_log": [
+        {
+         "path": "/dev/stdout"
+        }
+       ]
+      }
+     }
+    ],
+    "bind_to_port": true
+   }      
+  ],
+  "admin": {
+    "access_log_path": "/dev/stdout",
+    "address": "tcp://127.0.0.1:15000"
+  },
+  "cluster_manager": {
+    "clusters": [
+      {
+        "name": "rds",
+        "connect_timeout_ms": 1000,
+        "type": "strict_dns",
+        "lb_type": "round_robin",
+        "hosts": [
+          {
+            "url": "tcp://istio-pilot.istio-system:8080"
+          }
+        ]
+      },
+      {
+        "name": "lds",
+        "connect_timeout_ms": 1000,
+        "type": "strict_dns",
+        "lb_type": "round_robin",
+        "hosts": [
+          {
+            "url": "tcp://istio-pilot.istio-system:8080"
+          }
+        ]
+      }
+    ],
+    "sds": {
+      "cluster": {
+        "name": "sds",
+        "connect_timeout_ms": 1000,
+        "type": "strict_dns",
+        "lb_type": "round_robin",
+        "hosts": [
+          {
+            "url": "tcp://istio-pilot.istio-system:8080"
+          }
+        ]
+      },
+      "refresh_delay_ms": 1000
+    },
+    "cds": {
+      "cluster": {
+        "name": "cds",
+        "connect_timeout_ms": 1000,
+        "type": "strict_dns",
+        "lb_type": "round_robin",
+        "hosts": [
+          {
+            "url": "tcp://istio-pilot.istio-system:8080"
+          }
+        ]
+      },
+      "refresh_delay_ms": 1000
+    }
+  }
+}
